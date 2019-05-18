@@ -1,36 +1,0 @@
-							      |	                                                 > This is an								
-							      |	                                                 > notice! It								
-							      |	                                                 > therefore 								
-							      |	                                                 > the beginn								
-							      |	                                                 > document!								
-							      |	                                                 > 								
-This part of the					      |	This part of the                                   This part 								
-document has stayed the					      |	document has stayed the                            document h								
-sme from version to					      |	sme from version to                                sme from v								
-version. It shouldn't					      |	version. It shouldn't                              version. I								
-be shown if it doesn't					      |	be shown if it doesn't                             be shown i								
-change. Otherwise, that					      |	change. Otherwise, that                            change. Ot								
-would not be helping to					      |	would not be helping to                            would not 								
-compress the size of the				      |	compress the size of the                           compress t								
-changes.						      |	changes.                                           changes.								
-							      |	                                                   								
-This paragraph contains					      |	This paragraph contains                          <								
-text that is outdated.					      |	text that is outdated.                           <								
-It will be deleted in the				      |	It will be deleted in the                        <								
-near future.						      |	near future.                                     <								
-							      |	                                                 <								
-It is important to spell				      |	It is important to spell                           It is impo								
-check this dokument. On					      |	check this document. On                            check this								
-the other hand, a					      |	the other hand, a                                  the other 								
-misspelled word isn't					      |	misspelled word isn't                              misspelled								
-the end of the world.					      |	the end of the world.                              the end of								
-Nothing in the rest of					      |	Nothing in the rest of                             Nothing in								
-this paragraph needs to					      |	this paragraph needs to                            this parag								
-be changed. Things can					      |	be changed. Things can                             be changed								
-be added after it.					      |	be added after it.                                 be added a								
-							      |	                                                   								
-							      |	                                                 > This pragr								
-							      |	                                                 > important 								
-							      |	                                                 > to this do								
-							      |	                                                 > 								
-							      |	                                                 > 								
