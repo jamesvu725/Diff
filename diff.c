@@ -45,6 +45,8 @@ int showversion = 0, showbrief = 0, ignorecase = 0, report_identical = 0, showsi
 int showleftcolumn = 0, showunified = 0, showcontext = 0, suppresscommon = 0, diffnormal = 0;
 // index of string buf
 int count1 = 0, count2 = 0;
+// files
+const char* files[2] = { NULL, NULL };
 // load file into buffer
 void loadfiles(const char* filename1, const char* filename2) {
   memset(buf, 0, sizeof(buf));
@@ -92,7 +94,6 @@ void showoptions(const char* file1, const char* file2) {
 // process command line arguments
 void init_options_files(int argc, const char* argv[]) {
   int cnt = 0;
-  const char* files[2] = { NULL, NULL };
 
   while (argc-- > 0) {
     const char* arg = *argv;
@@ -131,15 +132,30 @@ void init_options_files(int argc, const char* argv[]) {
   // showoptions(files[0], files[1]);
   loadfiles(files[0], files[1]);
 }
+// print normal
+void print_normal(para* p, para* q) {
+
+}
 // print brief
-void print_brief( para* p, para* q) {
+void print_brief(para* p, para* q) {
   int foundmatch = 1;
-  while (foundmatch == 1) {
+  while (p != NULL || q != NULL) {
     foundmatch = para_equal(p, q);
-    if (foundmatch != 1) { printf("Files left.txt and right.txt differ\n"); break; }
+    if (foundmatch != 1) { printf("Files %s and %s differ\n", files[0], files[1]); break; }
     p = para_next(p);
     q = para_next(q);
   }
+}
+// print identical
+void print_identical(para* p, para* q) {
+  int foundmatch = 1;
+  while (p != NULL || q != NULL) {
+    foundmatch = para_equal(p, q);
+    if (foundmatch != 1) { print_normal(p, q); return; }
+    p = para_next(p);
+    q = para_next(q);
+  }
+  printf("Files %s and %s are identical\n", files[0], files[1]);
 }
 // print sidebyside
 void print_sidebyside(para* p, para* q) {
@@ -195,6 +211,7 @@ int main(int argc, const char * argv[]) {
   para* q = para_first(strings2, count2);
 
   if (showbrief) { print_brief(p, q); }
+  if (report_identical) { print_identical(p, q); }
   if (showsidebyside) { print_sidebyside(p, q); }
 
   return 0;

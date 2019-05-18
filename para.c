@@ -75,8 +75,11 @@ int para_equal(para* p, para* q) {
   // if start is larger than or equal to filesize return 0
   if (p->start >= p->filesize || q->start >= q->filesize) { return 0; }
   int i = p->start, j = q->start, equal = 0;
-  while ((equal = strcmp(p->base[i], q->base[j])) == 0 && i <= p->stop && j <= q->stop) { ++i; ++j; }
-  printf("%d\n", equal);
+  while ((equal = strcmp(p->base[i], q->base[j])) == 0) {
+    ++i; ++j;
+    if (i >= p->stop || j >= q->stop) { break; }
+  }
+  // printf("%d\n", equal);
   if (equal == 0) { return 1; }
   return 2;
 }
