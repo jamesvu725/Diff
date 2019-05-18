@@ -1,11 +1,3 @@
-//
-//  para.c
-//  diff
-//
-//  Created by William McCarthy on 5/9/19.
-//  Copyright © 2019 William McCarthy. All rights reserved.
-//
-
 #include <stdlib.h>
 #include <string.h>
 #include "para.h"
@@ -75,6 +67,7 @@ int para_equal(para* p, para* q) {
   // if start is larger than or equal to filesize return 0
   if (p->start >= p->filesize || q->start >= q->filesize) { return 0; }
   int i = p->start, j = q->start, equal = 0;
+  // printf("%d %d\n", p->start, q->start);
   while ((equal = strcmp(p->base[i], q->base[j])) == 0) {
     ++i; ++j;
     if (i >= p->stop || j >= q->stop) { break; }
@@ -93,7 +86,7 @@ void para_printboth(para* p, para* q) {
   if (p == NULL || q == NULL) { return; }
   for (int i = p->start, j = q->start; i <= p->stop && i != p->filesize &&
        j <= q->stop && j != q->filesize; ++i, ++j) {
-    if (strcmp(p->base[i], q->base[j]) == 0) { printboth(p->base[i]); }
+    if (strcmp(p->base[i], q->base[j]) == 0) { printboth(p->base[i], q->base[j]); }
     else { printchange(p->base[i], q->base[j]); }
   }
 }
@@ -105,4 +98,28 @@ void para_printfile(char* base[], int count, void (*fp)(const char*)) {
     p = para_next(p);
   }
   printline();
+}
+
+void para_printnormal(para* p, para* q, void(*fp)(const char*, const char*)) {
+  if (p == NULL && q == NULL) { return; }
+  if (p != NULL && q == NULL) {
+    for (int i = p->start; i <= p->stop && i != p->filesize; ++i) {
+      fp(p->base[i], NULL);
+    }
+  }
+  if (p == NULL && q != NULL) {
+    for (int i = q->start; i <= q->stop && i != q->filesize; ++i) {
+      fp(NULL, q->base[i]);
+    }
+  }
+  if (p != NULL && q != NULL) {
+    for (int i = p->start, j = q->start; i <= p->stop && i != p->filesize &&
+         j <= q->stop && j != q->filesize; ++i, ++j) {
+      if (strcmp(p->base[i], q->base[j]) == 0) {
+      } else {
+        printf("%dc%d\n", i+1, j+1);
+        fp(p->base[i], q->base[j]);
+      }
+    }
+  }
 }

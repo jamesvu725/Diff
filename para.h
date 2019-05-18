@@ -1,11 +1,3 @@
-//
-//  para.h
-//  diff
-//
-//  Created by William McCarthy on 5/9/19.
-//  Copyright © 2019 William McCarthy. All rights reserved.
-//
-
 #ifndef para_h
 #define para_h
 
@@ -29,8 +21,10 @@ size_t para_size(para* p);
 char** para_base(para* p);
 char* para_info(para* p);
 int   para_equal(para* p, para* q);
+
 void para_print(para* p, void (*fp)(const char*));
 void para_printfile(char* base[], int count, void (*fp)(const char*));
 void para_printboth(para* p, para* q);
+void para_printnormal(para* p, para* q, void(*fp)(const char*, const char*));
 
 #endif /* para_h */

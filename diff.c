@@ -1,11 +1,3 @@
-//
-//  diff_02.c
-//  diff
-//
-//  Created by William McCarthy on 4/29/19.
-//  Copyright © 2019 William McCarthy. All rights reserved.
-//
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,7 +14,13 @@
 #include "para.h"
 #include "util.h"
 
-// version statement
+char buf[BUFLEN];
+char *strings1[MAXSTRINGS], *strings2[MAXSTRINGS];
+int showversion = 0, showbrief = 0, ignorecase = 0, report_identical = 0, showsidebyside = 0;
+int showleftcolumn = 0, showunified = 0, showcontext = 0, suppresscommon = 0, diffnormal = 0;
+int count1 = 0, count2 = 0;
+const char* files[2] = { NULL, NULL };
+
 void version(void) {
   printf("\ndiff (CSUF diffutils) 1.0.0\n");
   printf("Copyright (C) 2019 CSUF\n");
@@ -31,22 +29,7 @@ void version(void) {
   printf("under the terms of the GNU General Public License.\n");
   printf("Written by James Vu.\n");
 }
-// to do list
-void todo_list(void) {
-  printf("\n\n\nTODO: check line by line in a paragraph, using '|' for differences");
-  printf("\nTODO: this starter code does not yet handle printing all of fin1's paragraphs.");
-  printf("\nTODO: handle the rest of diff's options\n");
-}
-// buffers
-char buf[BUFLEN];
-char *strings1[MAXSTRINGS], *strings2[MAXSTRINGS];
-// flags
-int showversion = 0, showbrief = 0, ignorecase = 0, report_identical = 0, showsidebyside = 0;
-int showleftcolumn = 0, showunified = 0, showcontext = 0, suppresscommon = 0, diffnormal = 0;
-// index of string buf
-int count1 = 0, count2 = 0;
-// files
-const char* files[2] = { NULL, NULL };
+
 // load file into buffer
 void loadfiles(const char* filename1, const char* filename2) {
   memset(buf, 0, sizeof(buf));
@@ -132,11 +115,62 @@ void init_options_files(int argc, const char* argv[]) {
   // showoptions(files[0], files[1]);
   loadfiles(files[0], files[1]);
 }
-// print normal
-void print_normal(para* p, para* q) {
 
+void print_normal(para* p, para* q) {
+  para* qlast = q;
+  para* plast = p;
+  int foundmatch = 0;
+  while (p != NULL) {
+    qlast = q;
+    foundmatch = 0;
+    // iterates through q until it finds a matching paragraph
+    // basically just sets foundmatch flag if found
+    while (q != NULL && (foundmatch = para_equal(p, q)) == 0) {
+      q = para_next(q);
+    }
+    // resets q to qlast
+    q = qlast;
+    // if foundmatch
+    if (foundmatch) {
+    // prints out the right until foundmatch is turned on
+      while ((foundmatch = para_equal(p, q)) == 0) {
+        printf("%da%d,%d\n", p->start, q->start+1, q->stop+1);
+        para_printnormal(NULL, q, printnormaladd);
+        q = para_next(q);
+        qlast = q;
+      }
+    // prints out both and increments both paragraph
+    // printf("%d\n", foundmatch);
+    // printf("%d %d\n", p->start, q->start);
+    // printf("%d %d\n", p->stop, q->stop);
+      if (foundmatch == 1) {
+      } else {
+        para_printnormal(p, q, printnormalchange);
+        if (para_next(p) == NULL) { plast = p; }
+      }
+      p = para_next(p);
+      q = para_next(q);
+
+    //prints out left and increments left
+    } else {
+      printf("%d,%dd%d\n", p->start+1, p->stop+1, q->start);
+      para_printnormal(p, NULL, printnormaldelete);
+      if (para_next(p) == NULL) { plast = p; }
+      p = para_next(p);
+    }
+  }
+  // prints out the remaining right paragraphs
+  // printf("%d\n", q->start);
+  // printf("%d\n", q->stop);
+  if (q != NULL) {
+    printf("%da%d,%d\n", plast->stop, q->start, q->filesize);
+    while (q != NULL) {
+      para_printnormal(NULL, q, printnormaladd);
+      q = para_next(q);
+    }
+  }
 }
-// print brief
+
 void print_brief(para* p, para* q) {
   int foundmatch = 1;
   while (p != NULL || q != NULL) {
@@ -146,7 +180,11 @@ void print_brief(para* p, para* q) {
     q = para_next(q);
   }
 }
-// print identical
+
+void print_ignorecase(para* p, para* q) {
+
+}
+
 void print_identical(para* p, para* q) {
   int foundmatch = 1;
   while (p != NULL || q != NULL) {
@@ -157,10 +195,10 @@ void print_identical(para* p, para* q) {
   }
   printf("Files %s and %s are identical\n", files[0], files[1]);
 }
-// print sidebyside
+
 void print_sidebyside(para* p, para* q) {
-    para* qlast = q;
-    int foundmatch = 0;
+  para* qlast = q;
+  int foundmatch = 0;
   while (p != NULL) {
     qlast = q;
     foundmatch = 0;
@@ -197,6 +235,17 @@ void print_sidebyside(para* p, para* q) {
   }
 }
 
+void print_leftcolumn(para* p, para* q) {
+
+}
+
+void print_context(para* p, para* q) {
+
+}
+
+void print_unified(para* p, para* q) {
+
+}
 int main(int argc, const char * argv[]) {
   // process commandline
   init_options_files(--argc, ++argv);
@@ -209,10 +258,19 @@ int main(int argc, const char * argv[]) {
   // p and q get first paragraph
   para* p = para_first(strings1, count1);
   para* q = para_first(strings2, count2);
-
+  // if just left column or suppress without sidebyside, do normal
+  // if left and side, do special side by side
+  // suppress overrides left
+  // brief overrides all except if they are identical
   if (showbrief) { print_brief(p, q); }
+  if (ignorecase) { print_ignorecase(p, q); }
   if (report_identical) { print_identical(p, q); }
+  if (diffnormal) { print_normal(p, q); }
+  if (suppresscommon) { }
   if (showsidebyside) { print_sidebyside(p, q); }
+  if (showleftcolumn) { print_leftcolumn(p, q); }
+  if (showcontext) { print_context(p, q); }
+  if (showunified) { print_unified(p, q); }
 
   return 0;
 }

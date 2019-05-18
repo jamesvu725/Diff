@@ -1,11 +1,3 @@
-//
-//  util.c
-//  diff
-//
-//  Created by William McCarthy on 5/9/19.
-//  Copyright © 2019 William McCarthy. All rights reserved.
-//
-
 #include <string.h>
 #include <stdlib.h>
 #include "util.h"
@@ -44,12 +36,13 @@ void printright(const char* right) {
   printf("%50s %s", ">", right);
 }
 // prints out both side
-void printboth(const char* left_right) {
+void printboth(const char* left, const char* right) {
   char buf[BUFLEN];
-  size_t len = strlen(left_right);
-  if (len > 0) { strncpy(buf, left_right, len); }
-  buf[len - 1] = '\0';
-  printf("%-50s %s", buf, left_right);
+  strcpy(buf, left);
+  int j = 0, len = (int)strlen(buf) - 1;
+  for (j = 0; j <= 49 - len ; ++j) { buf[len + j] = ' '; }
+  buf[len + j++] = '\0';
+  printf("%-50s %s", buf, right);
 }
 // print out both with change
 void printchange(const char* left, const char* right) {
@@ -60,4 +53,20 @@ void printchange(const char* left, const char* right) {
   buf[len + j++] = '|';
   buf[len + j++] = '\0';
   printf("%-50s %s", buf, right);
+}
+
+void printnormaladd(const char* left, const char* right) {
+  if (right == NULL) { return; }
+  printf("> %s", right);
+}
+
+void printnormalchange(const char* left, const char* right) {
+  printnormaladd(left, right);
+  printf("---\n");
+  printnormaldelete(left, right);
+}
+
+void printnormaldelete(const char* left, const char* right) {
+  if (left == NULL) { return; }
+  printf("< %s", left);
 }

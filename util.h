@@ -1,11 +1,3 @@
-//
-//  util.h
-//  diff
-//
-//  Created by William McCarthy on 5/9/19.
-//  Copyright © 2019 William McCarthy. All rights reserved.
-//
-
 #ifndef util_h
 #define util_h
 
@@ -17,9 +9,13 @@ FILE* openfile(const char* filename, const char* openflags);
 
 void printleft(const char* left);
 void printright(const char* right);
-void printboth(const char* left_right);
+void printboth(const char* left, const char* right);
 void printchange(const char* left, const char* right);
 
 void printline(void);
+
+void printnormaladd(const char* left, const char* right);
+void printnormalchange(const char* left, const char* right);
+void printnormaldelete(const char* left, const char* right);
 
 #endif /* util_h */
