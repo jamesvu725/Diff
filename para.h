@@ -20,7 +20,7 @@ size_t para_filesize(para* p);
 size_t para_size(para* p);
 char** para_base(para* p);
 char* para_info(para* p);
-int   para_equal(para* p, para* q);
+int   para_equal(para* p, para* q, int ignorecase);
 
 void para_print(para* p, void (*fp)(const char*));
 void para_printfile(char* base[], int count, void (*fp)(const char*));

@@ -59,7 +59,7 @@ char* para_info(para* p) {
   return buf;  // buf MUST be static
 }
 // check if para is equal
-int para_equal(para* p, para* q) {
+int para_equal(para* p, para* q, int ignorecase) {
   // return 0 if either is NULL
   if (p == NULL || q == NULL) { return 0; }
   // if paragraph size is unequal return 0
@@ -68,9 +68,16 @@ int para_equal(para* p, para* q) {
   if (p->start >= p->filesize || q->start >= q->filesize) { return 0; }
   int i = p->start, j = q->start, equal = 0;
   // printf("%d %d\n", p->start, q->start);
-  while ((equal = strcmp(p->base[i], q->base[j])) == 0) {
-    ++i; ++j;
-    if (i >= p->stop || j >= q->stop) { break; }
+  if (ignorecase) {
+    while ((equal = stricmp(p->base[i], q->base[j])) == 0) {
+      ++i; ++j;
+      if (i >= p->stop || j >= q->stop) { break; }
+    }
+  } else {
+    while ((equal = strcmp(p->base[i], q->base[j])) == 0) {
+      ++i; ++j;
+      if (i >= p->stop || j >= q->stop) { break; }
+    }
   }
   // printf("%d\n", equal);
   if (equal == 0) { return 1; }

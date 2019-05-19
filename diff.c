@@ -125,7 +125,7 @@ void print_normal(para* p, para* q) {
     foundmatch = 0;
     // iterates through q until it finds a matching paragraph
     // basically just sets foundmatch flag if found
-    while (q != NULL && (foundmatch = para_equal(p, q)) == 0) {
+    while (q != NULL && (foundmatch = para_equal(p, q, ignorecase)) == 0) {
       q = para_next(q);
     }
     // resets q to qlast
@@ -133,7 +133,7 @@ void print_normal(para* p, para* q) {
     // if foundmatch
     if (foundmatch) {
     // prints out the right until foundmatch is turned on
-      while ((foundmatch = para_equal(p, q)) == 0) {
+      while ((foundmatch = para_equal(p, q, ignorecase)) == 0) {
         printf("%da%d,%d\n", p->start, q->start+1, q->stop+1);
         para_printnormal(NULL, q, printnormaladd);
         q = para_next(q);
@@ -174,21 +174,17 @@ void print_normal(para* p, para* q) {
 void print_brief(para* p, para* q) {
   int foundmatch = 1;
   while (p != NULL || q != NULL) {
-    foundmatch = para_equal(p, q);
+    foundmatch = para_equal(p, q, ignorecase);
     if (foundmatch != 1) { printf("Files %s and %s differ\n", files[0], files[1]); break; }
     p = para_next(p);
     q = para_next(q);
   }
 }
 
-void print_ignorecase(para* p, para* q) {
-
-}
-
 void print_identical(para* p, para* q) {
   int foundmatch = 1;
   while (p != NULL || q != NULL) {
-    foundmatch = para_equal(p, q);
+    foundmatch = para_equal(p, q, ignorecase);
     if (foundmatch != 1) { print_normal(p, q); return; }
     p = para_next(p);
     q = para_next(q);
@@ -204,7 +200,7 @@ void print_sidebyside(para* p, para* q) {
     foundmatch = 0;
     // iterates through q until it finds a matching paragraph
     // basically just sets foundmatch flag if found
-    while (q != NULL && (foundmatch = para_equal(p, q)) == 0) {
+    while (q != NULL && (foundmatch = para_equal(p, q, ignorecase)) == 0) {
       q = para_next(q);
     }
     // resets q to qlast
@@ -212,7 +208,7 @@ void print_sidebyside(para* p, para* q) {
     // if foundmatch
     if (foundmatch) {
       // prints out the right until foundmatch is turned on
-      while ((foundmatch = para_equal(p, q)) == 0) {
+      while ((foundmatch = para_equal(p, q, ignorecase)) == 0) {
         para_print(q, printright);
         q = para_next(q);
         qlast = q;
@@ -263,7 +259,6 @@ int main(int argc, const char * argv[]) {
   // suppress overrides left
   // brief overrides all except if they are identical
   if (showbrief) { print_brief(p, q); }
-  if (ignorecase) { print_ignorecase(p, q); }
   if (report_identical) { print_identical(p, q); }
   if (diffnormal) { print_normal(p, q); }
   if (suppresscommon) { }
