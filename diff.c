@@ -30,7 +30,6 @@ void version(void) {
   printf("Written by James Vu.\n");
 }
 
-// load file into buffer
 void loadfiles(const char* filename1, const char* filename2) {
   memset(buf, 0, sizeof(buf));
   memset(strings1, 0, sizeof(strings1));
@@ -42,21 +41,21 @@ void loadfiles(const char* filename1, const char* filename2) {
   while (!feof(fin1) && fgets(buf, BUFLEN, fin1) != NULL) { strings1[count1++] = strdup(buf); }  fclose(fin1);
   while (!feof(fin2) && fgets(buf, BUFLEN, fin2) != NULL) { strings2[count2++] = strdup(buf); }  fclose(fin2);
 }
-// print options with yes or no
+
 void print_option(const char* name, int value) { printf("%17s: %s\n", name, yesorno(value)); }
-// output conflict error
+
 void diff_output_conflict_error(void) {
   fprintf(stderr, "diff: conflicting output style options\n");
   fprintf(stderr, "diff: Try `diff --help' for more information.)\n");
   exit(CONFLICTING_OUTPUT_OPTIONS);
 }
-// setoption with arg, string, string, value
+
 void setoption(const char* arg, const char* s, const char* t, int* value) {
   if ((strcmp(arg, s) == 0) || ((t != NULL && strcmp(arg, t) == 0))) {
     *value = 1;
   }
 }
-// print all options
+
 void showoptions(const char* file1, const char* file2) {
   printf("diff options...\n");
   print_option("diffnormal", diffnormal);
@@ -74,7 +73,7 @@ void showoptions(const char* file1, const char* file2) {
 
   printline();
 }
-// process command line arguments
+
 void init_options_files(int argc, const char* argv[]) {
   int cnt = 0;
 
@@ -99,20 +98,19 @@ void init_options_files(int argc, const char* argv[]) {
     }
     ++argv;   // DEBUG only;  move increment up to top of switch at release
   }
-  // diffnormal if no options
+
   if (!showcontext && !showunified && !showsidebyside && !showleftcolumn) {
     diffnormal = 1;
   }
-  // version overrides all option
+
   if (showversion) { version();  exit(0); }
-  // conflicts handling
+
   if (((showsidebyside || showleftcolumn) && (diffnormal || showcontext || showunified)) ||
       (showcontext && showunified) || (diffnormal && (showcontext || showunified))) {
 
     diff_output_conflict_error();
   }
 
-  // showoptions(files[0], files[1]);
   loadfiles(files[0], files[1]);
 }
 
@@ -123,34 +121,23 @@ void print_normal(para* p, para* q) {
   while (p != NULL) {
     qlast = q;
     foundmatch = 0;
-    // iterates through q until it finds a matching paragraph
-    // basically just sets foundmatch flag if found
     while (q != NULL && (foundmatch = para_equal(p, q, ignorecase)) == 0) {
       q = para_next(q);
     }
-    // resets q to qlast
     q = qlast;
-    // if foundmatch
     if (foundmatch) {
-    // prints out the right until foundmatch is turned on
       while ((foundmatch = para_equal(p, q, ignorecase)) == 0) {
         printf("%da%d,%d\n", p->start, q->start+1, q->stop+1);
         para_printnormal(NULL, q, printnormaladd);
         q = para_next(q);
         qlast = q;
       }
-    // prints out both and increments both paragraph
-    // printf("%d\n", foundmatch);
-    // printf("%d %d\n", p->start, q->start);
-    // printf("%d %d\n", p->stop, q->stop);
       if (foundmatch == 2) {
         para_printnormal(p, q, printnormalchange);
         if (para_next(p) == NULL) { plast = p; }
       }
       p = para_next(p);
       q = para_next(q);
-
-    //prints out left and increments left
     } else {
       printf("%d,%dd%d\n", p->start+1, p->stop+1, q->start);
       para_printnormal(p, NULL, printnormaldelete);
@@ -158,9 +145,6 @@ void print_normal(para* p, para* q) {
       p = para_next(p);
     }
   }
-  // prints out the remaining right paragraphs
-  // printf("%d\n", q->start);
-  // printf("%d\n", q->stop);
   if (q != NULL) {
     printf("%da%d,%d\n", plast->stop, q->start, q->filesize);
     while (q != NULL) {
@@ -198,23 +182,16 @@ void print_sidebyside(para* p, para* q) {
   while (p != NULL) {
     qlast = q;
     foundmatch = 0;
-    // iterates through q until it finds a matching paragraph
-    // basically just sets foundmatch flag if found
     while (q != NULL && (foundmatch = para_equal(p, q, ignorecase)) == 0) {
       q = para_next(q);
     }
-    // resets q to qlast
     q = qlast;
-    // if foundmatch
     if (foundmatch) {
-      // prints out the right until foundmatch is turned on
       while ((foundmatch = para_equal(p, q, ignorecase)) == 0) {
         para_print(q, printright);
         q = para_next(q);
         qlast = q;
       }
-      // prints out both and increments both paragraph
-      // printf("%d\n", foundmatch);
       if (suppresscommon && foundmatch == 1) {
         p = para_next(p);
         q = para_next(q);
@@ -223,13 +200,11 @@ void print_sidebyside(para* p, para* q) {
         p = para_next(p);
         q = para_next(q);
       }
-      //prints out left and increments left
     } else {
       para_print(p, printleft);
       p = para_next(p);
     }
   }
-  // prints out the remaining right paragraphs
   while (q != NULL) {
     para_print(q, printright);
     q = para_next(q);
@@ -243,16 +218,13 @@ void print_context(para* p, para* q) {
 void print_unified(para* p, para* q) {
 
 }
+
 int main(int argc, const char * argv[]) {
-  // process commandline
   init_options_files(--argc, ++argv);
 
-  // prints out left file
   // para_printfile(strings1, count1, printleft);
-  // prints out right file
   // para_printfile(strings2, count2, printright);
 
-  // p and q get first paragraph
   para* p = para_first(strings1, count1);
   para* q = para_first(strings2, count2);
   // if just left column or suppress without sidebyside, do normal
@@ -265,10 +237,10 @@ int main(int argc, const char * argv[]) {
   if (report_identical) {
     print_identical(p, q); return 0;
   }
-  if (diffnormal) { print_normal(p, q); }
-  if (showsidebyside) { print_sidebyside(p, q); }
-  if (showcontext) { print_context(p, q); }
-  if (showunified) { print_unified(p, q); }
+  if (diffnormal) { print_normal(p, q); return 0; }
+  if (showsidebyside) { print_sidebyside(p, q); return 0; }
+  if (showcontext) { print_context(p, q); return 0; }
+  if (showunified) { print_unified(p, q); return 0; }
 
   return 0;
 }

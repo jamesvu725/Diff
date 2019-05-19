@@ -4,20 +4,19 @@
 
 #define BUFLEN 256
 
-// returns no if 0 and yes if other
 char* yesorno(int condition) { return condition == 0 ? "no" : "YES"; }
-// open file and returns file pointer
+
 FILE* openfile(const char* filename, const char* openflags) {
   FILE* f;
   if ((f = fopen(filename, openflags)) == NULL) {  printf("can't open '%s'\n", filename);  exit(1); }
   return f;
 }
-// prints out 10 lines of =
+
 void printline(void) {
-  for (int i = 0; i < 10; ++i) { printf("========"); }
+  for (int i = 0; i < 10; ++i) { printf("=========="); }
   printf("\n");
 }
-// prints out left side
+
 void printleft(const char* left) {
   char buf[BUFLEN];
   strcpy(buf, left);
@@ -27,12 +26,12 @@ void printleft(const char* left) {
   buf[len + j++] = '\0';
   printf("%s\n", buf);
 }
-// prints out right side
+
 void printright(const char* right) {
   if (right == NULL) { return; }
   printf("%50s %s", ">", right);
 }
-// prints out both side
+
 void printboth(const char* left, const char* right) {
   char buf[BUFLEN];
   strcpy(buf, left);
@@ -41,7 +40,7 @@ void printboth(const char* left, const char* right) {
   buf[len + j++] = '\0';
   printf("%-50s %s", buf, right);
 }
-// print out both with change
+
 void printchange(const char* left, const char* right) {
   char buf[BUFLEN];
   strcpy(buf, left);
