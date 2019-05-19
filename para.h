@@ -24,7 +24,7 @@ int   para_equal(para* p, para* q, int ignorecase);
 
 void para_print(para* p, void (*fp)(const char*));
 void para_printfile(char* base[], int count, void (*fp)(const char*));
-void para_printboth(para* p, para* q);
+void para_printboth(para* p, para* q, int suppresscommon);
 void para_printnormal(para* p, para* q, void(*fp)(const char*, const char*));
 
 #endif /* para_h */

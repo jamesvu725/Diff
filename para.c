@@ -89,12 +89,13 @@ void para_print(para* p, void (*fp)(const char*)) {
   for (int i = p->start; i <= p->stop && i != p->filesize; ++i) { fp(p->base[i]); }
 }
 // print both, checks for almost equal
-void para_printboth(para* p, para* q) {
+void para_printboth(para* p, para* q, int suppresscommon) {
   if (p == NULL || q == NULL) { return; }
   for (int i = p->start, j = q->start; i <= p->stop && i != p->filesize &&
        j <= q->stop && j != q->filesize; ++i, ++j) {
-    if (strcmp(p->base[i], q->base[j]) == 0) { printboth(p->base[i], q->base[j]); }
-    else { printchange(p->base[i], q->base[j]); }
+    if (strcmp(p->base[i], q->base[j]) == 0 && !suppresscommon) { printboth(p->base[i], q->base[j]);
+    } else if (strcmp(p->base[i], q->base[j]) == 0 && suppresscommon) { printchange(p->base[i], q->base[j]);
+    }
   }
 }
 // print file

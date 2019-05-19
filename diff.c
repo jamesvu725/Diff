@@ -143,8 +143,7 @@ void print_normal(para* p, para* q) {
     // printf("%d\n", foundmatch);
     // printf("%d %d\n", p->start, q->start);
     // printf("%d %d\n", p->stop, q->stop);
-      if (foundmatch == 1) {
-      } else {
+      if (foundmatch == 2) {
         para_printnormal(p, q, printnormalchange);
         if (para_next(p) == NULL) { plast = p; }
       }
@@ -171,14 +170,15 @@ void print_normal(para* p, para* q) {
   }
 }
 
-void print_brief(para* p, para* q) {
+int print_brief(para* p, para* q) {
   int foundmatch = 1;
   while (p != NULL || q != NULL) {
     foundmatch = para_equal(p, q, ignorecase);
-    if (foundmatch != 1) { printf("Files %s and %s differ\n", files[0], files[1]); break; }
+    if (foundmatch != 1) { printf("Files %s and %s differ\n", files[0], files[1]); return 1; }
     p = para_next(p);
     q = para_next(q);
   }
+  return 0;
 }
 
 void print_identical(para* p, para* q) {
@@ -215,9 +215,14 @@ void print_sidebyside(para* p, para* q) {
       }
       // prints out both and increments both paragraph
       // printf("%d\n", foundmatch);
-        para_printboth(p, q);
+      if (suppresscommon && foundmatch == 1) {
         p = para_next(p);
         q = para_next(q);
+      } else {
+        para_printboth(p, q, suppresscommon);
+        p = para_next(p);
+        q = para_next(q);
+      }
       //prints out left and increments left
     } else {
       para_print(p, printleft);
@@ -258,12 +263,16 @@ int main(int argc, const char * argv[]) {
   // if left and side, do special side by side
   // suppress overrides left
   // brief overrides all except if they are identical
-  if (showbrief) { print_brief(p, q); }
-  if (report_identical) { print_identical(p, q); }
+  if (showbrief) {
+    if (print_brief(p, q)) { return 0; }
+  }
+  if (report_identical) {
+    print_identical(p, q); return 0;
+  }
   if (diffnormal) { print_normal(p, q); }
-  if (suppresscommon) { }
   if (showsidebyside) { print_sidebyside(p, q); }
   if (showleftcolumn) { print_leftcolumn(p, q); }
+  if (suppresscommon) { }
   if (showcontext) { print_context(p, q); }
   if (showunified) { print_unified(p, q); }
 
