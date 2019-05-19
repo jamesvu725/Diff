@@ -20,11 +20,8 @@ void printline(void) {
 // prints out left side
 void printleft(const char* left) {
   char buf[BUFLEN];
-  // copy left of buffer
   strcpy(buf, left);
-  // len is buflen -1
   int j = 0, len = (int)strlen(buf) - 1;
-  // if j is greater or equal to 0, fill in buffer with ' '
   for (j = 0; j <= 48 - len ; ++j) { buf[len + j] = ' '; }
   buf[len + j++] = '<';
   buf[len + j++] = '\0';
@@ -53,6 +50,16 @@ void printchange(const char* left, const char* right) {
   buf[len + j++] = '|';
   buf[len + j++] = '\0';
   printf("%-50s %s", buf, right);
+}
+
+void printleftcol(const char* left) {
+  char buf[BUFLEN];
+  strcpy(buf, left);
+  int j = 0, len = (int)strlen(buf) - 1;
+  for (j = 0; j <= 48 - len ; ++j) { buf[len + j] = ' '; }
+  buf[len + j++] = '(';
+  buf[len + j++] = '\0';
+  printf("%s\n", buf);
 }
 
 void printnormaladd(const char* left, const char* right) {

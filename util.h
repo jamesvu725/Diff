@@ -11,6 +11,7 @@ void printleft(const char* left);
 void printright(const char* right);
 void printboth(const char* left, const char* right);
 void printchange(const char* left, const char* right);
+void printleftcol(const char* left);
 
 void printline(void);
 

@@ -219,7 +219,7 @@ void print_sidebyside(para* p, para* q) {
         p = para_next(p);
         q = para_next(q);
       } else {
-        para_printboth(p, q, suppresscommon);
+        para_printboth(p, q, suppresscommon, showleftcolumn);
         p = para_next(p);
         q = para_next(q);
       }
@@ -234,10 +234,6 @@ void print_sidebyside(para* p, para* q) {
     para_print(q, printright);
     q = para_next(q);
   }
-}
-
-void print_leftcolumn(para* p, para* q) {
-
 }
 
 void print_context(para* p, para* q) {
@@ -271,8 +267,6 @@ int main(int argc, const char * argv[]) {
   }
   if (diffnormal) { print_normal(p, q); }
   if (showsidebyside) { print_sidebyside(p, q); }
-  if (showleftcolumn) { print_leftcolumn(p, q); }
-  if (suppresscommon) { }
   if (showcontext) { print_context(p, q); }
   if (showunified) { print_unified(p, q); }
 
