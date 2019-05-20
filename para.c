@@ -11,8 +11,6 @@ para* para_make(char* base[], int filesize, int start, int stop) {
   p->filesize = filesize;
   p->start = start;
   p->stop = stop;
-  p->firstline = (p == NULL || start < 0) ? NULL : p->base[start];
-  p->secondline = (p == NULL || start < 0 || filesize < 2) ? NULL : p->base[start + 1];
   return p;
 }
 
@@ -55,14 +53,12 @@ int para_equal(para* p, para* q, int ignorecase) {
   if (p->start >= p->filesize || q->start >= q->filesize) { return 0; }
   int i = p->start, j = q->start, equal = 0;
   if (ignorecase) {
-    while ((equal = stricmp(p->base[i], q->base[j])) == 0) {
+    while (i < p->stop && j < p->stop && (equal = stricmp(p->base[i], q->base[j])) == 0) {
       ++i; ++j;
-      if (i >= p->stop || j >= q->stop) { break; }
     }
   } else {
-    while ((equal = strcmp(p->base[i], q->base[j])) == 0) {
+    while (i < p->stop && j < p->stop && (equal = strcmp(p->base[i], q->base[j])) == 0) {
       ++i; ++j;
-      if (i >= p->stop || j >= q->stop) { break; }
     }
   }
   if (equal == 0) { return 1; }
@@ -84,39 +80,6 @@ void para_printboth(para* p, para* q, int suppresscommon, int showleftcolumn) {
         } else { printboth(p->base[i], q->base[j]); }
       }
     } else if (strcmp(p->base[i], q->base[j]) != 0) { printchange(p->base[i], q->base[j]);
-    }
-  }
-}
-
-void para_printfile(char* base[], int count, void (*fp)(const char*)) {
-  para* p = para_first(base, count);
-  while (p != NULL) {
-    para_print(p, fp);
-    p = para_next(p);
-  }
-  printline();
-}
-
-void para_printnormal(para* p, para* q, void(*fp)(const char*, const char*)) {
-  if (p == NULL && q == NULL) { return; }
-  if (p != NULL && q == NULL) {
-    for (int i = p->start; i <= p->stop && i != p->filesize; ++i) {
-      fp(p->base[i], NULL);
-    }
-  }
-  if (p == NULL && q != NULL) {
-    for (int i = q->start; i <= q->stop && i != q->filesize; ++i) {
-      fp(NULL, q->base[i]);
-    }
-  }
-  if (p != NULL && q != NULL) {
-    for (int i = p->start, j = q->start; i <= p->stop && i != p->filesize &&
-         j <= q->stop && j != q->filesize; ++i, ++j) {
-      if (strcmp(p->base[i], q->base[j]) == 0) {
-      } else {
-        printf("%dc%d\n", i+1, j+1);
-        fp(p->base[i], q->base[j]);
-      }
     }
   }
 }

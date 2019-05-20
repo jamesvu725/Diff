@@ -26,15 +26,13 @@ const char* files[2] = { NULL, NULL };
 
 void version(void);
 void loadfiles(const char* filename1, const char* filename2);
-void print_option(const char* name, int value);
 void diff_output_conflict_error(void);
 void setoption(const char* arg, const char* s, const char* t, int* value);
-void showoptions(const char* file1, const char* file2);
 void init_options_files(int argc, const char* argv[]);
 
 void print_normal(para* p, para* q);
 int print_brief(para* p, para* q);
-void print_identical(para* p, para* q);
+int print_identical(para* p, para* q);
 void print_sidebyside(para* p, para* q);
 void print_context(para* p, para* q);
 void print_unified(para* p, para* q);

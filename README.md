@@ -6,14 +6,13 @@
 
 -s and --report-identical-files
 
+--normal
+
 -y and --side-by-side
 
 -y --left-column
 
 -y --suppress-common-lines
-
-## Almost Complete
---normal
 
 ## Incomplete
 -c and -context=NUM

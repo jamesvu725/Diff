@@ -21,8 +21,6 @@ void loadfiles(const char* filename1, const char* filename2) {
   while (!feof(fin2) && fgets(buf, BUFLEN, fin2) != NULL) { strings2[count2++] = strdup(buf); }  fclose(fin2);
 }
 
-void print_option(const char* name, int value) { printf("%17s: %s\n", name, yesorno(value)); }
-
 void diff_output_conflict_error(void) {
   fprintf(stderr, "diff: conflicting output style options\n");
   fprintf(stderr, "diff: Try `diff --help' for more information.)\n");
@@ -33,24 +31,6 @@ void setoption(const char* arg, const char* s, const char* t, int* value) {
   if ((strcmp(arg, s) == 0) || ((t != NULL && strcmp(arg, t) == 0))) {
     *value = 1;
   }
-}
-
-void showoptions(const char* file1, const char* file2) {
-  printf("diff options...\n");
-  print_option("diffnormal", diffnormal);
-  print_option("show_version", showversion);
-  print_option("show_brief", showbrief);
-  print_option("ignorecase", ignorecase);
-  print_option("report_identical", report_identical);
-  print_option("show_sidebyside", showsidebyside);
-  print_option("show_leftcolumn", showleftcolumn);
-  print_option("suppresscommon", suppresscommon);
-  print_option("showcontext", showcontext);
-  print_option("show_unified", showunified);
-
-  printf("file1: %s,  file2: %s\n\n\n", file1, file2);
-
-  printline();
 }
 
 void init_options_files(int argc, const char* argv[]) {
@@ -111,14 +91,50 @@ void print_normal(para* p, para* q) {
         printf("%da%d,%d\n", p->start, qlast->start+1, q->start);
         q = qlast;
         while ((foundmatch = para_equal(p, q, ignorecase)) == 0) {
-          para_printnormal(NULL, q, printnormaladd);
+          para_print(q, printnormaladd);
           q = para_next(q);
           qlast = q;
         }
       }
       qlast = q;
       if (foundmatch == 2) {
-        para_printnormal(p, q, printnormalchange);
+        int i = p->start, j = q->start;
+        if (ignorecase) {
+          while (i < p->stop && j < p->stop && (stricmp(p->base[i], q->base[j]) == 0)) {
+            ++i; ++j;
+          }
+        } else {
+          while (i < p->stop && j < p->stop && (strcmp(p->base[i], q->base[j]) == 0)) {
+            ++i; ++j;
+          }
+        }
+        int istart = i, jstart = j;
+        if (ignorecase) {
+          while (i < p->stop && j < p->stop && (stricmp(p->base[i], q->base[j]) != 0)) {
+            ++i; ++j;
+          }
+        } else {
+          while (i < p->stop && j < p->stop && (strcmp(p->base[i], q->base[j]) != 0)) {
+            ++i; ++j;
+          }
+        }
+        if ((i - istart == 1) && (j - jstart == 1)) {
+          printf("%dc%d\n", istart+1, jstart+1);
+          printnormaldelete(p->base[i-1]);
+          printf("---\n");
+          printnormaladd(q->base[j-1]);
+        } else {
+          printf("%d,%dc%d,%d\n", istart+1, i, jstart+1, j);
+          while (istart != i) {
+            printnormaldelete(p->base[istart]);
+            ++istart;
+          }
+          printf("---\n");
+          while (jstart != j) {
+            printnormaladd(q->base[jstart]);
+            ++jstart;
+          }
+        }
       }
       plast = p;
       p = para_next(p);
@@ -126,9 +142,9 @@ void print_normal(para* p, para* q) {
     } else {
       if (q == NULL) {
         printf("%d,%dd%d\n", p->start, p->filesize, qlast->filesize);
-        printnormaldelete("\n", NULL);
+        printnormaldelete("\n");
         while (p != NULL) {
-          para_printnormal(p, NULL, printnormaldelete);
+          para_print(p, printnormaldelete);
           p = para_next(p);
         }
       } else {
@@ -141,7 +157,7 @@ void print_normal(para* p, para* q) {
           printf("%d,%dd%d\n", plast->start+1, p->start, qlast->start);
           p = plast;
           while(p != NULL && (foundmatch = para_equal(p, qlast, ignorecase)) == 0) {
-            para_printnormal(p, NULL, printnormaldelete);
+            para_print(p, printnormaldelete);
             if (para_next(p) == NULL) { plast = p; }
             p = para_next(p);
           }
@@ -151,9 +167,9 @@ void print_normal(para* p, para* q) {
   }
   if (q != NULL) {
     printf("%da%d,%d\n", plast->filesize, q->start, q->filesize);
-    printnormaladd(NULL, "\n");
+    printnormaladd("\n");
     while (q != NULL) {
-      para_printnormal(NULL, q, printnormaladd);
+      para_print(q, printnormaladd);
       q = para_next(q);
     }
   }
@@ -171,16 +187,14 @@ int print_brief(para* p, para* q) {
   return 0;
 }
 
-void print_identical(para* p, para* q) {
+int print_identical(para* p, para* q) {
   while (p != NULL || q != NULL) {
-    if (para_equal(p, q, ignorecase) != 1) {
-      print_normal(p, q);
-      return;
-    }
+    if (para_equal(p, q, ignorecase) != 1) { return 0; }
     p = para_next(p);
     q = para_next(q);
   }
   printf("Files %s and %s are identical\n", files[0], files[1]);
+  return 1;
 }
 
 void print_sidebyside(para* p, para* q) {
@@ -208,22 +222,24 @@ void print_sidebyside(para* p, para* q) {
         q = para_next(q);
       }
     } else {
+      if (q == NULL) { printleft("\n"); }
       para_print(p, printleft);
       p = para_next(p);
     }
   }
   while (q != NULL) {
+    printright("\n");
     para_print(q, printright);
     q = para_next(q);
   }
 }
 
 void print_context(para* p, para* q) {
-
+  printf("It looks too complicated.\n");
 }
 
 void print_unified(para* p, para* q) {
-
+  printf("It looks too complicated.\n");
 }
 
 int main(int argc, const char * argv[]) {
@@ -232,12 +248,12 @@ int main(int argc, const char * argv[]) {
   para* p = para_first(strings1, count1);
   para* q = para_first(strings2, count2);
 
-  if (showbrief) {    if (print_brief(p, q))    { return 0; }  }
-  if (report_identical) { print_identical(p, q);  return 0; }
-  if (diffnormal)       { print_normal(p, q);     return 0; }
-  if (showsidebyside)   { print_sidebyside(p, q); return 0; }
-  if (showcontext)      { print_context(p, q);    return 0; }
-  if (showunified)      { print_unified(p, q);    return 0; }
+  if (showbrief)        { if (print_brief(p, q))     { return 0; }  }
+  if (report_identical) { if (print_identical(p, q)) { return 0; } }
+  if (diffnormal)       {     print_normal(p, q);      return 0; }
+  if (showsidebyside)   {     print_sidebyside(p, q);  return 0; }
+  if (showcontext)      {     print_context(p, q);     return 0; }
+  if (showunified)      {     print_unified(p, q);     return 0; }
 
   return 0;
 }

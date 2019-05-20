@@ -9,8 +9,6 @@ struct para {
   int filesize;
   int start;
   int stop;
-  char* firstline;   // DEBUG only
-  char* secondline;
 };
 
 para* para_make(char* base[], int size, int start, int stop);
@@ -23,8 +21,6 @@ char* para_info(para* p);
 int   para_equal(para* p, para* q, int ignorecase);
 
 void para_print(para* p, void (*fp)(const char*));
-void para_printfile(char* base[], int count, void (*fp)(const char*));
 void para_printboth(para* p, para* q, int suppresscommon, int showleftcolumn);
-void para_printnormal(para* p, para* q, void(*fp)(const char*, const char*));
 
 #endif /* para_h */
