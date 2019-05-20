@@ -1,5 +1,21 @@
 #include "diff.h"
 
+int main(int argc, const char * argv[]) {
+  init_options_files(--argc, ++argv);
+
+  para* p = para_first(strings1, count1);
+  para* q = para_first(strings2, count2);
+
+  if (showbrief)        { if (print_brief(p, q))     { return 0; }  }
+  if (report_identical) { if (print_identical(p, q)) { return 0; } }
+  if (diffnormal)       {     print_normal(p, q);      return 0; }
+  if (showsidebyside)   {     print_sidebyside(p, q);  return 0; }
+  if (showcontext)      {     print_context(p, q);     return 0; }
+  if (showunified)      {     print_unified(p, q);     return 0; }
+
+  return 0;
+}
+
 void version(void) {
   printf("\ndiff (CSUF diffutils) 1.0.0\n");
   printf("Copyright (C) 2019 CSUF\n");
@@ -242,18 +258,141 @@ void print_unified(para* p, para* q) {
   printf("It looks too complicated.\n");
 }
 
-int main(int argc, const char * argv[]) {
-  init_options_files(--argc, ++argv);
+FILE* openfile(const char* filename, const char* openflags) {
+  FILE* f;
+  if ((f = fopen(filename, openflags)) == NULL) {  printf("can't open '%s'\n", filename);  exit(1); }
+  return f;
+}
 
-  para* p = para_first(strings1, count1);
-  para* q = para_first(strings2, count2);
+void printleft(const char* left) {
+  char buf[BUFLEN];
+  strcpy(buf, left);
+  int j = 0, len = (int)strlen(buf) - 1;
+  for (j = 0; j <= 48 - len ; ++j) { buf[len + j] = ' '; }
+  buf[len + j++] = '<';
+  buf[len + j++] = '\0';
+  printf("%s\n", buf);
+}
 
-  if (showbrief)        { if (print_brief(p, q))     { return 0; }  }
-  if (report_identical) { if (print_identical(p, q)) { return 0; } }
-  if (diffnormal)       {     print_normal(p, q);      return 0; }
-  if (showsidebyside)   {     print_sidebyside(p, q);  return 0; }
-  if (showcontext)      {     print_context(p, q);     return 0; }
-  if (showunified)      {     print_unified(p, q);     return 0; }
+void printright(const char* right) {
+  if (right == NULL) { return; }
+  printf("%50s %s", ">", right);
+}
 
-  return 0;
+void printboth(const char* left, const char* right) {
+  char buf[BUFLEN];
+  strcpy(buf, left);
+  int j = 0, len = (int)strlen(buf) - 1;
+  for (j = 0; j <= 49 - len ; ++j) { buf[len + j] = ' '; }
+  buf[len + j++] = '\0';
+  printf("%-50s %s", buf, right);
+}
+
+void printchange(const char* left, const char* right) {
+  char buf[BUFLEN];
+  strcpy(buf, left);
+  int j = 0, len = (int)strlen(buf) - 1;
+  for (j = 0; j <= 48 - len ; ++j) { buf[len + j] = ' '; }
+  buf[len + j++] = '|';
+  buf[len + j++] = '\0';
+  printf("%-50s %s", buf, right);
+}
+
+void printleftcol(const char* left) {
+  char buf[BUFLEN];
+  strcpy(buf, left);
+  int j = 0, len = (int)strlen(buf) - 1;
+  for (j = 0; j <= 48 - len ; ++j) { buf[len + j] = ' '; }
+  buf[len + j++] = '(';
+  buf[len + j++] = '\0';
+  printf("%s\n", buf);
+}
+
+void printnormaladd(const char* right) {
+  if (right == NULL) { return; }
+  printf("> %s", right);
+}
+
+void printnormaldelete(const char* left) {
+  if (left == NULL) { return; }
+  printf("< %s", left);
+}
+
+para* para_make(char* base[], int filesize, int start, int stop) {
+  para* p = (para*) malloc(sizeof(para));
+  p->base = base;
+  p->filesize = filesize;
+  p->start = start;
+  p->stop = stop;
+  return p;
+}
+
+para* para_first(char* base[], int size) {
+  para* p = para_make(base, size, 0, -1);
+  return para_next(p);
+}
+
+void para_destroy(para* p) { free(p); }
+
+para* para_next(para* p) {
+  if (p == NULL || p->stop == p->filesize) { return NULL; }
+  int i;
+  para* pnew = para_make(p->base, p->filesize, p->stop + 1, p->stop + 1);
+  for (i = pnew->start; i < p->filesize && strcmp(p->base[i], "\n") != 0; ++i) { }
+  pnew->stop = i;
+  if (pnew->start >= p->filesize) {
+    free(pnew);
+    pnew = NULL;
+  }
+  return pnew;
+}
+
+size_t para_filesize(para* p) { return p == NULL ? 0 : p->filesize; }
+
+size_t para_size(para* p) { return p == NULL || p->stop < p->start ? 0 : p->stop - p->start + 1; }
+
+char** para_base(para* p) { return p->base; }
+
+char* para_info(para* p) {
+  static char buf[BUFLEN];   // static for a reason
+  snprintf(buf, sizeof(buf), "base: %p, filesize: %d, start: %d, stop: %d\n",
+           p->base, p->filesize, p->start, p->stop);
+  return buf;  // buf MUST be static
+}
+
+int para_equal(para* p, para* q, int ignorecase) {
+  if (p == NULL || q == NULL) { return 0; }
+  if (para_size(p) != para_size(q)) { return 0; }
+  if (p->start >= p->filesize || q->start >= q->filesize) { return 0; }
+  int i = p->start, j = q->start, equal = 0;
+  if (ignorecase) {
+    while (i < p->stop && j < p->stop && (equal = stricmp(p->base[i], q->base[j])) == 0) {
+      ++i; ++j;
+    }
+  } else {
+    while (i < p->stop && j < p->stop && (equal = strcmp(p->base[i], q->base[j])) == 0) {
+      ++i; ++j;
+    }
+  }
+  if (equal == 0) { return 1; }
+  return 2;
+}
+
+void para_print(para* p, void (*fp)(const char*)) {
+  if (p == NULL) { return; }
+  for (int i = p->start; i <= p->stop && i != p->filesize; ++i) { fp(p->base[i]); }
+}
+
+void para_printboth(para* p, para* q, int suppresscommon, int showleftcolumn) {
+  if (p == NULL || q == NULL) { return; }
+  for (int i = p->start, j = q->start; i <= p->stop && i != p->filesize &&
+       j <= q->stop && j != q->filesize; ++i, ++j) {
+    if (strcmp(p->base[i], q->base[j]) == 0) {
+      if (!suppresscommon) {
+        if (showleftcolumn) { printleftcol(p->base[i]);
+        } else { printboth(p->base[i], q->base[j]); }
+      }
+    } else if (strcmp(p->base[i], q->base[j]) != 0) { printchange(p->base[i], q->base[j]);
+    }
+  }
 }
