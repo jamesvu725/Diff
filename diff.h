@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #define ARGC_ERROR 1
 #define TOOMANYFILES_ERROR 2
@@ -49,7 +50,8 @@ size_t para_filesize(para* p);
 size_t para_size(para* p);
 char** para_base(para* p);
 char* para_info(para* p);
-int   para_equal(para* p, para* q, int ignorecase);
+int   para_equal(para* p, para* q);
+int stricmp_(char* s, char* t);
 
 void para_print(para* p, void (*fp)(const char*));
 void para_printboth(para* p, para* q, int suppresscommon, int showleftcolumn);

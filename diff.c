@@ -97,16 +97,16 @@ void print_normal(para* p, para* q) {
     foundmatch = 0;
     if (q != NULL) {
       qlast = q;
-      while (q != NULL && (foundmatch = para_equal(p, q, ignorecase)) == 0) { q = para_next(q); }
+      while (q != NULL && (foundmatch = para_equal(p, q)) == 0) { q = para_next(q); }
       q = qlast;
     }
 
     if (foundmatch) {
-      while ((foundmatch = para_equal(p, q, ignorecase)) == 0) { q = para_next(q); }
+      while ((foundmatch = para_equal(p, q)) == 0) { q = para_next(q); }
       if (qlast->start+1 < q->start) {
         printf("%da%d,%d\n", p->start, qlast->start+1, q->start);
         q = qlast;
-        while ((foundmatch = para_equal(p, q, ignorecase)) == 0) {
+        while ((foundmatch = para_equal(p, q)) == 0) {
           para_print(q, printnormaladd);
           q = para_next(q);
           qlast = q;
@@ -116,7 +116,7 @@ void print_normal(para* p, para* q) {
       if (foundmatch == 2) {
         int i = p->start, j = q->start;
         if (ignorecase) {
-          while (i < p->stop && j < p->stop && (stricmp(p->base[i], q->base[j]) == 0)) {
+          while (i < p->stop && j < p->stop && (stricmp_(p->base[i], q->base[j]) == 0)) {
             ++i; ++j;
           }
         } else {
@@ -126,7 +126,7 @@ void print_normal(para* p, para* q) {
         }
         int istart = i, jstart = j;
         if (ignorecase) {
-          while (i < p->stop && j < p->stop && (stricmp(p->base[i], q->base[j]) != 0)) {
+          while (i < p->stop && j < p->stop && (stricmp_(p->base[i], q->base[j]) != 0)) {
             ++i; ++j;
           }
         } else {
@@ -165,14 +165,14 @@ void print_normal(para* p, para* q) {
         }
       } else {
         plast = p;
-        while(p != NULL && (foundmatch = para_equal(p, qlast, ignorecase)) == 0) {
+        while(p != NULL && (foundmatch = para_equal(p, qlast)) == 0) {
           if (para_next(p) == NULL) { break; }
           p = para_next(p);
         }
         if (plast->start+1 < p->start) {
           printf("%d,%dd%d\n", plast->start+1, p->start, qlast->start);
           p = plast;
-          while(p != NULL && (foundmatch = para_equal(p, qlast, ignorecase)) == 0) {
+          while(p != NULL && (foundmatch = para_equal(p, qlast)) == 0) {
             para_print(p, printnormaldelete);
             if (para_next(p) == NULL) { plast = p; }
             p = para_next(p);
@@ -193,7 +193,7 @@ void print_normal(para* p, para* q) {
 
 int print_brief(para* p, para* q) {
   while (p != NULL || q != NULL) {
-    if (para_equal(p, q, ignorecase) != 1) {
+    if (para_equal(p, q) != 1) {
       printf("Files %s and %s differ\n", files[0], files[1]);
       return 1;
     }
@@ -205,7 +205,7 @@ int print_brief(para* p, para* q) {
 
 int print_identical(para* p, para* q) {
   while (p != NULL || q != NULL) {
-    if (para_equal(p, q, ignorecase) != 1) { return 0; }
+    if (para_equal(p, q) != 1) { return 0; }
     p = para_next(p);
     q = para_next(q);
   }
@@ -219,12 +219,12 @@ void print_sidebyside(para* p, para* q) {
   while (p != NULL) {
     qlast = q;
     foundmatch = 0;
-    while (q != NULL && (foundmatch = para_equal(p, q, ignorecase)) == 0) {
+    while (q != NULL && (foundmatch = para_equal(p, q)) == 0) {
       q = para_next(q);
     }
     q = qlast;
     if (foundmatch) {
-      while ((foundmatch = para_equal(p, q, ignorecase)) == 0) {
+      while ((foundmatch = para_equal(p, q)) == 0) {
         para_print(q, printright);
         q = para_next(q);
         qlast = q;
@@ -360,13 +360,13 @@ char* para_info(para* p) {
   return buf;  // buf MUST be static
 }
 
-int para_equal(para* p, para* q, int ignorecase) {
+int para_equal(para* p, para* q) {
   if (p == NULL || q == NULL) { return 0; }
   if (para_size(p) != para_size(q)) { return 0; }
   if (p->start >= p->filesize || q->start >= q->filesize) { return 0; }
   int i = p->start, j = q->start, equal = 0;
   if (ignorecase) {
-    while (i < p->stop && j < p->stop && (equal = stricmp(p->base[i], q->base[j])) == 0) {
+    while (i < p->stop && j < p->stop && (equal = stricmp_(p->base[i], q->base[j])) == 0) {
       ++i; ++j;
     }
   } else {
@@ -376,6 +376,13 @@ int para_equal(para* p, para* q, int ignorecase) {
   }
   if (equal == 0) { return 1; }
   return 2;
+}
+
+int stricmp_(char* s, char* t) {
+  while(*s != '\0' && (*s == *t)){
+    s++; t++;
+  }
+  return tolower(*s) - tolower(*t);
 }
 
 void para_print(para* p, void (*fp)(const char*)) {
