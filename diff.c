@@ -1,25 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#define ARGC_ERROR 1
-#define TOOMANYFILES_ERROR 2
-#define CONFLICTING_OUTPUT_OPTIONS 3
-
-#define MAXSTRINGS 1024
-#define MAXPARAS 4096
-
-#define HASHLEN 200
-
-#include "para.h"
-#include "util.h"
-
-char buf[BUFLEN];
-char *strings1[MAXSTRINGS], *strings2[MAXSTRINGS];
-int showversion = 0, showbrief = 0, ignorecase = 0, report_identical = 0, showsidebyside = 0;
-int showleftcolumn = 0, showunified = 0, showcontext = 0, suppresscommon = 0, diffnormal = 0;
-int count1 = 0, count2 = 0;
-const char* files[2] = { NULL, NULL };
+#include "diff.h"
 
 void version(void) {
   printf("\ndiff (CSUF diffutils) 1.0.0\n");
@@ -119,34 +98,60 @@ void print_normal(para* p, para* q) {
   para* plast = p;
   int foundmatch = 0;
   while (p != NULL) {
-    qlast = q;
     foundmatch = 0;
-    while (q != NULL && (foundmatch = para_equal(p, q, ignorecase)) == 0) {
-      q = para_next(q);
+    if (q != NULL) {
+      qlast = q;
+      while (q != NULL && (foundmatch = para_equal(p, q, ignorecase)) == 0) { q = para_next(q); }
+      q = qlast;
     }
-    q = qlast;
+
     if (foundmatch) {
-      while ((foundmatch = para_equal(p, q, ignorecase)) == 0) {
-        printf("%da%d,%d\n", p->start, q->start+1, q->stop+1);
-        para_printnormal(NULL, q, printnormaladd);
-        q = para_next(q);
-        qlast = q;
+      while ((foundmatch = para_equal(p, q, ignorecase)) == 0) { q = para_next(q); }
+      if (qlast->start+1 < q->start) {
+        printf("%da%d,%d\n", p->start, qlast->start+1, q->start);
+        q = qlast;
+        while ((foundmatch = para_equal(p, q, ignorecase)) == 0) {
+          para_printnormal(NULL, q, printnormaladd);
+          q = para_next(q);
+          qlast = q;
+        }
       }
+      qlast = q;
       if (foundmatch == 2) {
         para_printnormal(p, q, printnormalchange);
-        if (para_next(p) == NULL) { plast = p; }
       }
+      plast = p;
       p = para_next(p);
       q = para_next(q);
     } else {
-      printf("%d,%dd%d\n", p->start+1, p->stop+1, q->start);
-      para_printnormal(p, NULL, printnormaldelete);
-      if (para_next(p) == NULL) { plast = p; }
-      p = para_next(p);
+      if (q == NULL) {
+        printf("%d,%dd%d\n", p->start, p->filesize, qlast->filesize);
+        printnormaldelete("\n", NULL);
+        while (p != NULL) {
+          para_printnormal(p, NULL, printnormaldelete);
+          p = para_next(p);
+        }
+      } else {
+        plast = p;
+        while(p != NULL && (foundmatch = para_equal(p, qlast, ignorecase)) == 0) {
+          if (para_next(p) == NULL) { break; }
+          p = para_next(p);
+        }
+        if (plast->start+1 < p->start) {
+          printf("%d,%dd%d\n", plast->start+1, p->start, qlast->start);
+          p = plast;
+          while(p != NULL && (foundmatch = para_equal(p, qlast, ignorecase)) == 0) {
+            para_printnormal(p, NULL, printnormaldelete);
+            if (para_next(p) == NULL) { plast = p; }
+            p = para_next(p);
+          }
+        }
+      }
     }
   }
   if (q != NULL) {
-    printf("%da%d,%d\n", plast->stop, q->start, q->filesize);
+    printf("%da%d,%d\n", plast->filesize, q->start, q->filesize);
+    printnormaladd(NULL, "\n");
     while (q != NULL) {
       para_printnormal(NULL, q, printnormaladd);
       q = para_next(q);
@@ -155,10 +160,11 @@ void print_normal(para* p, para* q) {
 }
 
 int print_brief(para* p, para* q) {
-  int foundmatch = 1;
   while (p != NULL || q != NULL) {
-    foundmatch = para_equal(p, q, ignorecase);
-    if (foundmatch != 1) { printf("Files %s and %s differ\n", files[0], files[1]); return 1; }
+    if (para_equal(p, q, ignorecase) != 1) {
+      printf("Files %s and %s differ\n", files[0], files[1]);
+      return 1;
+    }
     p = para_next(p);
     q = para_next(q);
   }
@@ -166,10 +172,11 @@ int print_brief(para* p, para* q) {
 }
 
 void print_identical(para* p, para* q) {
-  int foundmatch = 1;
   while (p != NULL || q != NULL) {
-    foundmatch = para_equal(p, q, ignorecase);
-    if (foundmatch != 1) { print_normal(p, q); return; }
+    if (para_equal(p, q, ignorecase) != 1) {
+      print_normal(p, q);
+      return;
+    }
     p = para_next(p);
     q = para_next(q);
   }
@@ -222,25 +229,15 @@ void print_unified(para* p, para* q) {
 int main(int argc, const char * argv[]) {
   init_options_files(--argc, ++argv);
 
-  // para_printfile(strings1, count1, printleft);
-  // para_printfile(strings2, count2, printright);
-
   para* p = para_first(strings1, count1);
   para* q = para_first(strings2, count2);
-  // if just left column or suppress without sidebyside, do normal
-  // if left and side, do special side by side
-  // suppress overrides left
-  // brief overrides all except if they are identical
-  if (showbrief) {
-    if (print_brief(p, q)) { return 0; }
-  }
-  if (report_identical) {
-    print_identical(p, q); return 0;
-  }
-  if (diffnormal) { print_normal(p, q); return 0; }
-  if (showsidebyside) { print_sidebyside(p, q); return 0; }
-  if (showcontext) { print_context(p, q); return 0; }
-  if (showunified) { print_unified(p, q); return 0; }
+
+  if (showbrief) {    if (print_brief(p, q))    { return 0; }  }
+  if (report_identical) { print_identical(p, q);  return 0; }
+  if (diffnormal)       { print_normal(p, q);     return 0; }
+  if (showsidebyside)   { print_sidebyside(p, q); return 0; }
+  if (showcontext)      { print_context(p, q);    return 0; }
+  if (showunified)      { print_unified(p, q);    return 0; }
 
   return 0;
 }
